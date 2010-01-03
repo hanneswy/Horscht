@@ -144,6 +144,9 @@ void normalize() {
 void steer() {
   motor_1_speed = joy_y_norm;
   motor_2_speed = joy_y_norm;
+  //experimental stuff ahead
+  motor_1_speed = motor_1_speed + (joy_x_norm/4);
+  motor_2_speed = motor_2_speed - (joy_x_norm/4);
 }
 
 void motor_control() {
@@ -155,7 +158,7 @@ void motor_control() {
     digitalWrite(MOTOR_1_DIRECTION_PIN_A, LOW);
     digitalWrite(MOTOR_1_DIRECTION_PIN_B, HIGH);
   } 
-  analogWrite(MOTOR_1_SPEED_PIN, motor_1_speed);
+  analogWrite(MOTOR_1_SPEED_PIN, abs(motor_1_speed));
   
    if(motor_1_speed > 0) {
     digitalWrite(MOTOR_2_DIRECTION_PIN_A, HIGH);
@@ -165,7 +168,7 @@ void motor_control() {
     digitalWrite(MOTOR_2_DIRECTION_PIN_A, LOW);
     digitalWrite(MOTOR_2_DIRECTION_PIN_B, HIGH);
   } 
-  analogWrite(MOTOR_2_SPEED_PIN, motor_2_speed);
+  analogWrite(MOTOR_2_SPEED_PIN, abs(motor_2_speed));
 }
 
 // calibration procedure
