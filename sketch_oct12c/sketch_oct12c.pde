@@ -1,5 +1,5 @@
-// Horscht 5
-// Horscht 2
+// Horscht 6
+// Horscht 1
 #include <Wire.h>
 #include <string.h>
 #undef int
