@@ -126,33 +126,18 @@ void get_nunchuk_data ()
 
 void normalize() {
   // normalize data with calibration data
-  // if value is in deadzone the set to zero
-  if ((joy_y_raw >= (deadzone_y_min)) && (joy_y_raw <= (deadzone_y_max)))
-  {
-    joy_y_norm = 0;
-    //digitalWrite(7, HIGH);
-    //digitalWrite(8, HIGH);
-  }
-  
-  // if value is below deadzone, remap interval (joy_y_min - start of deadzone) to (-255 - 0)
-  if (joy_y_raw < (deadzone_y_min))
-  {
-    joy_y_norm = map(joy_y_raw, joy_y_min, (deadzone_y_min), -255, 0);
-  }
-  
-  // if value is above deadzone, remap interval (end of deadzone - joy_y_max) to (0 - 255) and set rotation direction forward
-  if (joy_y_raw > (deadzone_y_max))
-  {
-    joy_y_norm = map(joy_y_raw, (deadzone_y_max), joy_y_max, 0, 255);
-    digitalWrite(7, LOW);
-    digitalWrite(8, HIGH);
-  }
+  // y axis
+  if ((joy_y_raw >= deadzone_y_min) && (joy_y_raw <= deadzone_y_max))   joy_y_norm = 0;                // if value is in deadzone the set to zero
+  if (joy_y_raw < deadzone_y_min)   joy_y_norm = map(joy_y_raw, joy_y_min, deadzone_y_min, -255, 0);   // if value is below deadzone, remap interval (joy_y_min - start of deadzone) to (-255 - 0)
+  if (joy_y_raw > deadzone_y_max)   joy_y_norm = map(joy_y_raw, deadzone_y_max, joy_y_max, 0, 255);    // if value is above deadzone, remap interval (end of deadzone - joy_y_max) to (0 - 255) and set rotation direction forward
   if (joy_y_raw > joy_y_max) joy_y_norm = 255;
   if (joy_y_raw < joy_y_min) joy_y_norm = -255;
-  
-  // TODO: x-axis normalization = steering
-
-  
+  //  x axis
+  if ((joy_x_raw >= deadzone_x_min) && (joy_x_raw <= deadzone_x_max))    joy_x_norm = 0;                
+  if (joy_x_raw < deadzone_x_min)   joy_x_norm = map(joy_x_raw, joy_y_min, deadzone_x_min, -255, 0);
+  if (joy_x_raw > deadzone_x_max)   joy_x_norm = map(joy_x_raw, deadzone_x_max, joy_x_max, 0,255); 
+  if (joy_x_raw > joy_x_max) joy_x_norm = 255;
+  if (joy_x_raw < joy_x_min) joy_x_norm = -255;
 }
 
 //
@@ -219,20 +204,20 @@ void calibrate ()
 // this is just a debugging function which prints stuff to serial port
 void print ()
 {
-  Serial.print (joy_y_raw, DEC);
+  Serial.print (joy_x_norm, DEC);
   Serial.print ("\t");
   
   Serial.print (joy_y_norm, DEC);
   Serial.print ("\t");
   
-  Serial.print (joy_y_min);
+  Serial.print (motor_1_speed);
   Serial.print ("\t");
   
-  Serial.print (joy_y_neutral);
+  Serial.print (motor_2_speed);
   Serial.print ("\t");
   
-  Serial.print (joy_y_max);
-  Serial.print ("\t");
+  //Serial.print (joy_y_max);
+  //Serial.print ("\t");
 
   //Serial.print (joy_y_raw, DEC);
   //Serial.print ("\t");
