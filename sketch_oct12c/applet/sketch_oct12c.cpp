@@ -1,3 +1,4 @@
+// Horscht
 #include <Wire.h>
 #include <string.h>
 #undef int
@@ -12,6 +13,7 @@ void send_zero ();
 void loop ();
 void get_nunchuk_data ();
 void normalize();
+void steer();
 void motor_control();
 void calibrate ();
 void print ();
@@ -29,15 +31,17 @@ int MOTOR_2_DIRECTION_PIN_B = 4;
 //read nunchuk data
 int z_button = 0;              // button z state
 int c_button = 0;              // button c state
-int joy_x_axis;
-int joy_y_axis;
-int accel_x_axis;
-int accel_y_axis;
-int accel_z_axis;
+int joy_x_raw;
+int joy_y_raw;
+int accel_x_raw;
+int accel_y_raw;
+int accel_z_raw;
 
 // calibrated nunchuk data
 int joy_x_norm;
 int joy_y_norm;
+int motor_1_speed = 0;
+int motor_2_speed = 0;
 
 //constants for calibration
 int joy_x_neutral = 127;
@@ -96,6 +100,8 @@ void loop ()
   get_nunchuk_data();
   // enter calibration when c-button pressed
   if (c_button == 1)  calibrate ();
+  // steering data
+  steer();  
   // motor control
   motor_control();
   // minimum interval
@@ -121,7 +127,7 @@ void get_nunchuk_data ()
 void normalize() {
   // normalize data with calibration data
   // if value is in deadzone the set to zero
-  if ((joy_y_axis >= (deadzone_y_min)) && (joy_y_axis <= (deadzone_y_max)))
+  if ((joy_y_raw >= (deadzone_y_min)) && (joy_y_raw <= (deadzone_y_max)))
   {
     joy_y_norm = 0;
     //digitalWrite(7, HIGH);
@@ -129,34 +135,52 @@ void normalize() {
   }
   
   // if value is below deadzone, remap interval (joy_y_min - start of deadzone) to (-255 - 0)
-  if (joy_y_axis < (deadzone_y_min))
+  if (joy_y_raw < (deadzone_y_min))
   {
-    joy_y_norm = map(joy_y_axis, joy_y_min, (deadzone_y_min), -255, 0);
+    joy_y_norm = map(joy_y_raw, joy_y_min, (deadzone_y_min), -255, 0);
   }
   
   // if value is above deadzone, remap interval (end of deadzone - joy_y_max) to (0 - 255) and set rotation direction forward
-  if (joy_y_axis > (deadzone_y_max))
+  if (joy_y_raw > (deadzone_y_max))
   {
-    joy_y_norm = map(joy_y_axis, (deadzone_y_max), joy_y_max, 0, 255);
+    joy_y_norm = map(joy_y_raw, (deadzone_y_max), joy_y_max, 0, 255);
     digitalWrite(7, LOW);
     digitalWrite(8, HIGH);
   }
-  if (joy_y_axis > joy_y_max) joy_y_norm = 255;
-  if (joy_y_axis < joy_y_min) joy_y_norm = -255;
+  if (joy_y_raw > joy_y_max) joy_y_norm = 255;
+  if (joy_y_raw < joy_y_min) joy_y_norm = -255;
   
   // TODO: x-axis normalization = steering
+
+  
+}
+
+//
+void steer() {
+  motor_1_speed = joy_y_norm;
+  motor_2_speed = joy_y_norm;
 }
 
 void motor_control() {
-  if(joy_y_norm > 0) {
-    digitalWrite(7, HIGH);
-    digitalWrite(8, LOW); 
+  if(motor_1_speed > 0) {
+    digitalWrite(MOTOR_1_DIRECTION_PIN_A, HIGH);
+    digitalWrite(MOTOR_1_DIRECTION_PIN_B, LOW); 
   }
-  if(joy_y_norm < 0) {
-    digitalWrite(7, LOW);
-    digitalWrite(8, HIGH);
+  if(motor_1_speed < 0) {
+    digitalWrite(MOTOR_1_DIRECTION_PIN_A, LOW);
+    digitalWrite(MOTOR_1_DIRECTION_PIN_B, HIGH);
+  } 
+  analogWrite(MOTOR_1_SPEED_PIN, motor_1_speed);
+  
+   if(motor_1_speed > 0) {
+    digitalWrite(MOTOR_2_DIRECTION_PIN_A, HIGH);
+    digitalWrite(MOTOR_2_DIRECTION_PIN_B, LOW); 
   }
-  analogWrite(MOTOR_1_SPEED_PIN, joy_y_norm);
+  if(motor_1_speed < 0) {
+    digitalWrite(MOTOR_2_DIRECTION_PIN_A, LOW);
+    digitalWrite(MOTOR_2_DIRECTION_PIN_B, HIGH);
+  } 
+  analogWrite(MOTOR_2_SPEED_PIN, motor_2_speed);
 }
 
 // calibration procedure
@@ -195,7 +219,7 @@ void calibrate ()
 // this is just a debugging function which prints stuff to serial port
 void print ()
 {
-  Serial.print (joy_y_axis, DEC);
+  Serial.print (joy_y_raw, DEC);
   Serial.print ("\t");
   
   Serial.print (joy_y_norm, DEC);
@@ -210,16 +234,16 @@ void print ()
   Serial.print (joy_y_max);
   Serial.print ("\t");
 
-  //Serial.print (joy_y_axis, DEC);
+  //Serial.print (joy_y_raw, DEC);
   //Serial.print ("\t");
 
-  //Serial.print (accel_x_axis, DEC);
+  //Serial.print (accel_x_raw, DEC);
   //Serial.print ("\t");
 
-  //Serial.print (accel_y_axis, DEC);
+  //Serial.print (accel_y_raw, DEC);
   //Serial.print ("\t");
 
-  //Serial.print (accel_z_axis, DEC);
+  //Serial.print (accel_z_raw, DEC);
   //Serial.print ("\t");
 
   //Serial.print (z_button, DEC);
@@ -245,21 +269,21 @@ char nunchuk_decode_byte (char x)
 // byte outbuf[5] contains bits for z and c buttons
 // it also contains the least significant bits for the accelerometer data so we have to check each bit of byte outbuf[5]
 void decode_outbuf() {
-  joy_x_axis = outbuf[0];  
-  joy_y_axis = outbuf[1];
-  accel_x_axis = outbuf[2] * 2 * 2;
-  accel_y_axis = outbuf[3] * 2 * 2;
-  accel_z_axis = outbuf[4] * 2 * 2;
+  joy_x_raw = outbuf[0];  
+  joy_y_raw = outbuf[1];
+  accel_x_raw = outbuf[2] * 2 * 2;
+  accel_y_raw = outbuf[3] * 2 * 2;
+  accel_z_raw = outbuf[4] * 2 * 2;
   z_button = 1;
   c_button = 1;
   if ((outbuf[5] >> 0) & 1)  z_button = 0;
   if ((outbuf[5] >> 1) & 1)  c_button = 0;
-  if ((outbuf[5] >> 2) & 1)  accel_x_axis += 2;
-  if ((outbuf[5] >> 3) & 1)  accel_x_axis += 1;
-  if ((outbuf[5] >> 4) & 1)  accel_y_axis += 2;
-  if ((outbuf[5] >> 5) & 1)  accel_y_axis += 1;
-  if ((outbuf[5] >> 6) & 1)  accel_z_axis += 2;
-  if ((outbuf[5] >> 7) & 1)  accel_z_axis += 1;
+  if ((outbuf[5] >> 2) & 1)  accel_x_raw += 2;
+  if ((outbuf[5] >> 3) & 1)  accel_x_raw += 1;
+  if ((outbuf[5] >> 4) & 1)  accel_y_raw += 2;
+  if ((outbuf[5] >> 5) & 1)  accel_y_raw += 1;
+  if ((outbuf[5] >> 6) & 1)  accel_z_raw += 2;
+  if ((outbuf[5] >> 7) & 1)  accel_z_raw += 1;
 }
 
 
