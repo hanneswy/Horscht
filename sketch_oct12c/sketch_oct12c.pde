@@ -2,6 +2,7 @@
 // Horscht 1
 #include <Wire.h>
 #include <string.h>
+// was zum teufel ist das?
 #undef int
 #include <stdio.h>
 
@@ -30,7 +31,7 @@ int joy_y_norm;
 int motor_1_speed = 0;
 int motor_2_speed = 0;
 
-//constants for calibration
+//constants for calibration (these should actually be constants)
 int joy_x_neutral = 127;
 int joy_x_min = 0;
 int joy_x_max = 254;
@@ -47,7 +48,7 @@ int deadzone_y_max = 130;
 
 void setup ()
 {
-  Serial.begin (19200);
+  Serial.begin(19200);
   Wire.begin();    // join i2c bus with address 0x52
   nunchuck_init(); // send the initilization handshake
   pinMode(MOTOR_1_SPEED_PIN, OUTPUT);    // motor 1 enable (pwm)
@@ -65,38 +66,40 @@ void p (char s[])
   Serial.print(s);
 }
 
-void nunchuck_init ()
+void nunchuck_init()
 {
-  Wire.beginTransmission (0x52);	// transmit to device 0x52
-  Wire.send (0x40);		// sends memory address
-  Wire.send (0x00);		// sends sent a zero. 
-  Serial.print(Wire.endTransmission ());	// stop transmitting
+  Wire.beginTransmission(0x52);	// transmit to device 0x52
+  Wire.send(0x40);		// sends memory address
+  Wire.send(0x00);		// sends sent a zero. 
+  Serial.print(Wire.endTransmission());	// stop transmitting
 }
 
-void send_zero ()
+void send_zero()
 {
-  Wire.beginTransmission (0x52);	// transmit to device 0x52
-  Wire.send (0x00);		// sends one byte
-  Wire.endTransmission ();	// stop transmitting
+  Wire.beginTransmission(0x52);	// transmit to device 0x52
+  Wire.send(0x00);		// sends one byte
+  Wire.endTransmission();	// stop transmitting
 }
 
 // ###################### LOOP
-void loop ()
+void loop()
 {
   // get new nunchuk data
   get_nunchuk_data();
   // enter calibration when c-button pressed
-  if (c_button == 1)  calibrate ();
+  if (c_button == 1)  calibrate();
   // steering data
   steer();  
   // motor control
   motor_control();
+	// print for debugging
+  print();
   // minimum interval
-  delay (100);
+  delay(100);
 }
 
 // request data from the nunchuk decode them and print them to serial and in outbuf[]
-void get_nunchuk_data ()
+void get_nunchuk_data()
 {
   int cnt = 0;
   Wire.requestFrom (0x52, 6); // request data from nunchuck
@@ -107,8 +110,7 @@ void get_nunchuk_data ()
     }
   decode_outbuf();
   normalize();
-  send_zero (); // send the request for next bytes
-  print ();
+  send_zero(); // send the request for next bytes
 }
 
 void normalize() {
@@ -161,9 +163,9 @@ void motor_control() {
 // calibration procedure
 // release joystick(!!!) then press and hold c-button. while holding, move joystick to all four maxima (+-x and +-y)
 // led on "ledPin" will be on during calibration
-void calibrate ()
+void calibrate()
 {
-  digitalWrite (ledPin, HIGH);	// sets the LED on
+  digitalWrite(ledPin, HIGH);	// sets the LED on
   Serial.print("beginning calibration");
   Serial.print ("\r\n");
   joy_x_neutral = outbuf[0];
@@ -194,17 +196,17 @@ void calibrate ()
 // this is just a debugging function which prints stuff to serial port
 void print ()
 {
-  Serial.print (joy_x_norm, DEC);
-  Serial.print ("\t");
+  Serial.print(joy_x_norm, DEC);
+  Serial.print("\t");
   
-  Serial.print (joy_y_norm, DEC);
-  Serial.print ("\t");
+  Serial.print(joy_y_norm, DEC);
+  Serial.print("\t");
   
-  Serial.print (motor_1_speed);
-  Serial.print ("\t");
+  Serial.print(motor_1_speed);
+  Serial.print("\t");
   
-  Serial.print (motor_2_speed);
-  Serial.print ("\t");
+  Serial.print(motor_2_speed);
+  Serial.print("\t");
   
   //Serial.print (joy_y_max);
   //Serial.print ("\t");
@@ -227,12 +229,12 @@ void print ()
   //Serial.print (c_button, DEC);
   //Serial.print ("\t");
 
-  Serial.print ("\r\n");
+  Serial.print("\r\n");
 }
 
 // Encode data to format that most wiimote drivers except
 // only needed if you use one of the regular wiimote drivers
-char nunchuk_decode_byte (char x)
+char nunchuk_decode_byte(char x)
 {
   x = (x ^ 0x17) + 0x17;
   return x;
